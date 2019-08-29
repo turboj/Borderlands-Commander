@@ -43,6 +43,7 @@ namespace BorderlandsCommander
         private System.Windows.Forms.MenuItem FeedbackMenuItem = null;
         private System.Windows.Forms.MenuItem SymbolBindingsMenuItem = null;
         private System.Windows.Forms.MenuItem NumpadBindingsMenuItem = null;
+        private System.Windows.Forms.MenuItem UdpEnableMenuItem = null;
 
 
         protected override void OnInitialized(EventArgs e)
@@ -78,12 +79,26 @@ namespace BorderlandsCommander
             NotifyIcon.ContextMenu.MenuItems.Add(NumpadBindingsMenuItem);
 
             NotifyIcon.ContextMenu.MenuItems.Add("-");
+            App.udpEnabled = Properties.Settings.Default.enableUdpPort;
+            UdpEnableMenuItem = new System.Windows.Forms.MenuItem();
+            UdpEnableMenuItem.Text = "Enable UDP Port";
+            UdpEnableMenuItem.Click += OnUdpEnableMenuItemClicked;
+            UdpEnableMenuItem.Checked = App.udpEnabled;
+            NotifyIcon.ContextMenu.MenuItems.Add(UdpEnableMenuItem);
+            var portItem= 
+                NotifyIcon.ContextMenu.MenuItems.Add(
+                    String.Format("UDP Port: {0}",
+                    Properties.Settings.Default.udpPort));
+            portItem.Enabled = false;
+            NotifyIcon.ContextMenu.MenuItems.Add("-");
 
             var exitMenu = new System.Windows.Forms.MenuItem();
             exitMenu.Text = "Exit";
             exitMenu.Click += OnNotifyMenuExitClicked;
             NotifyIcon.ContextMenu.MenuItems.Add(exitMenu);
 
+
+            
             Loaded += (_0, _1) => NotifyIcon.Visible = true;
         }
 
@@ -188,6 +203,14 @@ namespace BorderlandsCommander
             Properties.Settings.Default.Save();
         }
 
+        private void OnUdpEnableMenuItemClicked(object sender, EventArgs e)
+        {
+            App.udpEnabled = !App.udpEnabled;
+            UdpEnableMenuItem.Enabled = App.udpEnabled;
+            Properties.Settings.Default.enableUdpPort = App.udpEnabled;
+            Properties.Settings.Default.Save();
+        }
+
         private void OnNotifyMenuBindingsClicked(object sender, EventArgs e)
         {
             if (sender == SymbolBindingsMenuItem)
@@ -260,10 +283,13 @@ namespace BorderlandsCommander
                 if (HotkeysEnabled)
                     foreach (KeyBinding keyBinding in KeyBindings)
                         keyBinding.Register(Handle);
+
+                UdpControl.BlWindowHandle = windowHandle;
             }
             // If another process was switched to, unregister our hotkeys.
             else
             {
+                UdpControl.BlWindowHandle = UdpControl.INVALID_HANDLE_VALUE;
                 // Unbind the F7 key.
                 F7Binding.Unregister(Handle);
                 // Disable all of our other hotkeys.

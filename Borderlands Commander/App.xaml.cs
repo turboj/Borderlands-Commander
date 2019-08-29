@@ -23,10 +23,25 @@ namespace BorderlandsCommander
             // Initialize the window by showing it, then hide it again.
             window.Show();
             window.Hide();
+            // udpControl = new UdpControl();
+        }
+
+        public static bool udpEnabled
+        {
+            get { return udpControl != null; }
+            set 
+            {
+                if (value && (udpControl == null)) udpControl = new UdpControl();
+                if (!value && (udpControl!= null))
+                {
+                     udpControl=null;
+                }
+            }
         }
 
 
         public static bool ShowFeedback = false;
+        public static UdpControl udpControl = null;
 
         public static void PerformAction(string command, string feedback)
         {
@@ -44,7 +59,7 @@ namespace BorderlandsCommander
                 RunCommand("say {0}", feedback);
         }
 
-        private static bool PlayersOnly = false;
+        public static bool PlayersOnly = false;
 
         public static void TogglePlayersOnly()
         {
@@ -94,6 +109,14 @@ namespace BorderlandsCommander
 
         private static string SavedLocation = null;
         private static string SavedRotation = null;
+        private static string SavedPositionMap = null;
+
+        public static void GetSavedPositionStrings( out string location, out string Rotation, out string MapName)
+        {
+            location = SavedLocation;
+            Rotation = SavedRotation;
+            MapName = SavedPositionMap;
+        }
 
         public static void SavePosition()
         {
@@ -109,19 +132,30 @@ namespace BorderlandsCommander
             if (pawn == null || pawn.Class != "WillowPlayerPawn")
                 goto Failed;
 
-            pawn.UsePropertyMode = BLObject.PropertyMode.GetAll;
+           pawn.UsePropertyMode = BLObject.PropertyMode.GetAll;
+
 
             // Save the rotation and location for our controller and pawn.
             SavedRotation = controller["Rotation"] as string;
             SavedLocation = pawn["Location"] as string;
+            
+            // Traverse object tree...
+            var info = pawn["WorldInfo"] as BLObject;
+            info.UsePropertyMode = BLObject.PropertyMode.GetAll;
+            var mapLevel = info["CommittedPersistentLevel"] as BLObject;
+            // ... until we can get the map name
+            SavedPositionMap = mapLevel.Name;
 
             // Provide feedback to the player.
             if (ShowFeedback)
                 BLIO.RunCommand("say Saved position");
-
+    
             return;
+
+
             Failed:
             RunCommand("say Failed to save position");
+            SavedPositionMap = null;
         }
 
         public static void RestorePosition()
@@ -154,7 +188,7 @@ namespace BorderlandsCommander
         }
 
 
-        private static bool ShowDamageNumbers = true;
+        public static bool ShowDamageNumbers = true;
 
         public static void ToggleDamageNumbers()
         {
