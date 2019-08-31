@@ -35,6 +35,7 @@ namespace BorderlandsCommander
             var socket = new Socket(AddressFamily.InterNetworkV6, SocketType.Dgram, ProtocolType.Udp);
 
             socket.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.IPv6Only, false);
+            socket.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.ReuseAddress, true);
             socket.Bind(new IPEndPoint(IPAddress.Parse("::"), listenPort));
 
             udpClient = new UdpClient();
@@ -47,30 +48,37 @@ namespace BorderlandsCommander
 
         void AsyncCallbackReceive(IAsyncResult ar)
         {
-            byte[] receiveBytes = udpClient.EndReceive(ar, ref RemoteIpEndPoint);
+
             try
             {
-                string receiveString = Encoding.UTF8.GetString(receiveBytes);
+                byte[] receiveBytes = udpClient.EndReceive(ar, ref RemoteIpEndPoint);
+                try
+                {
+                    string receiveString = Encoding.UTF8.GetString(receiveBytes);
 #if DEBUG
-                Console.WriteLine("Recv {0} bytes from {1} port {2}", receiveBytes.Length, RemoteIpEndPoint.Address.ToString(), RemoteIpEndPoint.Port);
+                    Console.WriteLine("Recv {0} bytes from {1} port {2}", receiveBytes.Length, RemoteIpEndPoint.Address.ToString(), RemoteIpEndPoint.Port);
 #endif
-                if (receiveBytes.Length > 1)
+                    if (receiveBytes.Length > 1)
+                    {
+#if DEBUG
+                        Console.WriteLine("{0}", receiveString);
+#endif
+                        Parse(receiveString);
+                    }
+                }
+                catch (System.Exception e)
                 {
 #if DEBUG
-                    Console.WriteLine("{0}", receiveString);
+                    Console.WriteLine(e.ToString());
+
+#else
+                
 #endif
-                    Parse(receiveString);
                 }
-            } catch (System.Exception e)
-            {
-#if DEBUG
-                Console.WriteLine(e.ToString());
-                
-#else   
-                
-#endif
+                udpClient.BeginReceive(AsyncCallbackReceive, null);
+
             }
-            udpClient.BeginReceive(AsyncCallbackReceive, null);
+            catch (Exception) { }
         }
 
 
@@ -267,6 +275,12 @@ namespace BorderlandsCommander
             App.TogglePlayersOnly();
         }
         
+
+        public void Close()
+        {
+            udpClient.Client.Shutdown(SocketShutdown.Both);
+            udpClient.Close();
+        }
 
 
     }

@@ -34,6 +34,7 @@ namespace BorderlandsCommander
                 if (value && (udpControl == null)) udpControl = new UdpControl();
                 if (!value && (udpControl!= null))
                 {
+                     udpControl.Close();
                      udpControl=null;
                 }
             }
