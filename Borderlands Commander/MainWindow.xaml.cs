@@ -206,7 +206,7 @@ namespace BorderlandsCommander
         private void OnUdpEnableMenuItemClicked(object sender, EventArgs e)
         {
             App.udpEnabled = !App.udpEnabled;
-            UdpEnableMenuItem.Enabled = App.udpEnabled;
+            UdpEnableMenuItem.Checked = App.udpEnabled;
             Properties.Settings.Default.enableUdpPort = App.udpEnabled;
             Properties.Settings.Default.Save();
         }
