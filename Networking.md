@@ -1,5 +1,5 @@
 ---
-title: How to use UDP Remote Control Port
+How to use UDP Remote Control Port
 ---
 
 ### Settings
